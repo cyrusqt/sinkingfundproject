@@ -1,0 +1,2552 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Sinking Funds Organizer</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            :root {
+                --forest: #1a3a2a;
+                --moss: #2d5a3d;
+                --sage: #4e8b5f;
+                --mint: #a8d5b5;
+                --cream: #f5f0e8;
+                --warm-white: #fdfaf4;
+                --gold: #c9a84c;
+                --amber: #e8c56d;
+                --charcoal: #1c1c1c;
+                --muted: #7a8a80;
+                --card-bg: #ffffff;
+                --border: rgba(78, 139, 95, 0.15);
+                --shadow: 0 4px 24px rgba(26, 58, 42, 0.1);
+                --shadow-lg: 0 16px 48px rgba(26, 58, 42, 0.18);
+                --radius: 18px;
+                --radius-sm: 10px;
+            }
+
+            html {
+                scroll-behavior: smooth;
+            }
+
+            body {
+                font-family: "DM Sans", sans-serif;
+                background: var(--cream);
+                color: var(--charcoal);
+                min-height: 100vh;
+                overflow-x: hidden;
+            }
+
+            /* ── MOBILE TOPBAR ── */
+            .mobile-topbar {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 60px;
+                background: var(--forest);
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 18px;
+                z-index: 300;
+            }
+            .mobile-logo {
+                font-family: "Playfair Display", serif;
+                font-size: 20px;
+                color: var(--amber);
+            }
+            .mobile-logo span {
+                color: var(--mint);
+            }
+            .hamburger {
+                background: none;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                padding: 4px;
+            }
+            .hamburger span {
+                display: block;
+                width: 22px;
+                height: 2px;
+                background: #fff;
+                border-radius: 2px;
+                transition: all 0.25s;
+            }
+            .hamburger.open span:nth-child(1) {
+                transform: translateY(7px) rotate(45deg);
+            }
+            .hamburger.open span:nth-child(2) {
+                opacity: 0;
+            }
+            .hamburger.open span:nth-child(3) {
+                transform: translateY(-7px) rotate(-45deg);
+            }
+
+            /* ── OVERLAY (mobile nav) ── */
+            .nav-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.4);
+                z-index: 150;
+            }
+            .nav-overlay.open {
+                display: block;
+            }
+
+            /* ── SIDEBAR ── */
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 72px;
+                height: 100vh;
+                background: var(--forest);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 28px 0;
+                z-index: 200;
+                gap: 8px;
+                transition: width 0.3s ease;
+            }
+            .sidebar:hover {
+                width: 200px;
+            }
+            .sidebar-logo {
+                font-family: "Playfair Display", serif;
+                font-size: 22px;
+                color: var(--amber);
+                letter-spacing: -1px;
+                margin-bottom: 32px;
+                white-space: nowrap;
+                overflow: hidden;
+                width: 40px;
+                transition: width 0.3s;
+            }
+            .sidebar:hover .sidebar-logo {
+                width: 160px;
+            }
+            .sidebar-logo span {
+                color: var(--mint);
+            }
+            .nav-item {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding: 13px 20px;
+                color: rgba(255, 255, 255, 0.55);
+                cursor: pointer;
+                transition: all 0.2s;
+                position: relative;
+                overflow: hidden;
+                white-space: nowrap;
+            }
+            .nav-item:hover,
+            .nav-item.active {
+                color: #fff;
+                background: rgba(255, 255, 255, 0.08);
+            }
+            .nav-item.active::before {
+                content: "";
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 3px;
+                background: var(--amber);
+                border-radius: 0 2px 2px 0;
+            }
+            .nav-icon {
+                font-size: 20px;
+                flex-shrink: 0;
+            }
+            .nav-label {
+                font-size: 14px;
+                font-weight: 500;
+                opacity: 0;
+                transition: opacity 0.2s;
+            }
+            .sidebar:hover .nav-label {
+                opacity: 1;
+            }
+
+            /* ── MAIN CONTENT ── */
+            .main {
+                margin-left: 72px;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                transition: margin-left 0.3s;
+            }
+
+            /* ── TOPBAR ── */
+            .topbar {
+                height: 72px;
+                background: var(--warm-white);
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 36px;
+                position: sticky;
+                top: 0;
+                z-index: 50;
+            }
+            .topbar-title {
+                font-family: "Playfair Display", serif;
+                font-size: 22px;
+                font-weight: 700;
+                color: var(--forest);
+            }
+            .topbar-actions {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 20px;
+                border-radius: 999px;
+                font-family: "DM Sans", sans-serif;
+                font-size: 13.5px;
+                font-weight: 600;
+                cursor: pointer;
+                border: none;
+                transition: all 0.2s;
+                text-decoration: none;
+            }
+            .btn-primary {
+                background: var(--forest);
+                color: #fff;
+            }
+            .btn-primary:hover {
+                background: var(--moss);
+                transform: translateY(-1px);
+                box-shadow: 0 6px 20px rgba(26, 58, 42, 0.25);
+            }
+            .btn-secondary {
+                background: transparent;
+                color: var(--forest);
+                border: 1.5px solid var(--border);
+            }
+            .btn-secondary:hover {
+                background: var(--cream);
+            }
+            .btn-danger {
+                background: #fdecea;
+                color: #c0392b;
+                border: 1.5px solid rgba(192, 57, 43, 0.2);
+            }
+            .btn-danger:hover {
+                background: #f5c6c2;
+            }
+            .avatar {
+                width: 38px;
+                height: 38px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, var(--sage), var(--gold));
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                font-weight: 700;
+                font-size: 14px;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+
+            /* ── CONTENT ── */
+            .content {
+                padding: 36px;
+                flex: 1;
+            }
+
+            /* ── HERO BANNER ── */
+            .hero {
+                background: linear-gradient(
+                    135deg,
+                    var(--forest) 0%,
+                    var(--moss) 60%,
+                    var(--sage) 100%
+                );
+                border-radius: var(--radius);
+                padding: 40px 48px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 24px;
+                margin-bottom: 36px;
+                position: relative;
+                overflow: hidden;
+            }
+            .hero::before {
+                content: "";
+                position: absolute;
+                top: -40px;
+                right: -40px;
+                width: 280px;
+                height: 280px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.04);
+                pointer-events: none;
+            }
+            .hero::after {
+                content: "";
+                position: absolute;
+                bottom: -60px;
+                right: 80px;
+                width: 180px;
+                height: 180px;
+                border-radius: 50%;
+                background: rgba(201, 168, 76, 0.08);
+                pointer-events: none;
+            }
+            .hero-text h1 {
+                font-family: "Playfair Display", serif;
+                font-size: 34px;
+                font-weight: 900;
+                color: #fff;
+                line-height: 1.15;
+                margin-bottom: 10px;
+            }
+            .hero-text p {
+                color: var(--mint);
+                font-size: 15px;
+            }
+            .hero-stats {
+                display: flex;
+                gap: 28px;
+                flex-shrink: 0;
+            }
+            .hero-stat {
+                text-align: center;
+                background: rgba(255, 255, 255, 0.09);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                backdrop-filter: blur(8px);
+                border-radius: var(--radius-sm);
+                padding: 18px 28px;
+            }
+            .hero-stat-val {
+                font-family: "Playfair Display", serif;
+                font-size: 28px;
+                font-weight: 700;
+                color: var(--amber);
+            }
+            .hero-stat-label {
+                font-size: 12px;
+                color: var(--mint);
+                margin-top: 4px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+            }
+
+            /* ── SUMMARY CARDS ── */
+            .summary-row {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 18px;
+                margin-bottom: 36px;
+            }
+            .summary-card {
+                background: var(--card-bg);
+                border-radius: var(--radius);
+                padding: 22px 24px;
+                border: 1px solid var(--border);
+                box-shadow: var(--shadow);
+                position: relative;
+                overflow: hidden;
+                transition:
+                    transform 0.2s,
+                    box-shadow 0.2s;
+            }
+            .summary-card:hover {
+                transform: translateY(-3px);
+                box-shadow: var(--shadow-lg);
+            }
+            .summary-card-icon {
+                width: 44px;
+                height: 44px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                margin-bottom: 14px;
+            }
+            .summary-card-val {
+                font-family: "Playfair Display", serif;
+                font-size: 26px;
+                font-weight: 700;
+                color: var(--charcoal);
+            }
+            .summary-card-label {
+                font-size: 13px;
+                color: var(--muted);
+                margin-top: 4px;
+            }
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 12px;
+                font-weight: 600;
+                padding: 3px 10px;
+                border-radius: 999px;
+                margin-top: 8px;
+            }
+            .badge-green {
+                background: #e6f4eb;
+                color: #2d7a45;
+            }
+            .badge-amber {
+                background: #fef6e0;
+                color: #a07820;
+            }
+            .badge-blue {
+                background: #e8f0fe;
+                color: #2a5bd7;
+            }
+            .badge-red {
+                background: #fdecea;
+                color: #c0392b;
+            }
+
+            /* ── GRID ── */
+            .grid-2 {
+                display: grid;
+                grid-template-columns: 1fr 340px;
+                gap: 24px;
+                margin-bottom: 24px;
+            }
+
+            /* ── SECTION HEADER ── */
+            .section-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 20px;
+            }
+            .section-title {
+                font-family: "Playfair Display", serif;
+                font-size: 20px;
+                font-weight: 700;
+                color: var(--forest);
+            }
+
+            /* ── FUND CARDS ── */
+            .funds-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 18px;
+            }
+            .fund-card {
+                background: var(--card-bg);
+                border-radius: var(--radius);
+                overflow: hidden;
+                border: 1px solid var(--border);
+                box-shadow: var(--shadow);
+                transition:
+                    transform 0.25s,
+                    box-shadow 0.25s;
+                position: relative;
+            }
+            .fund-card:hover {
+                transform: translateY(-5px) scale(1.01);
+                box-shadow: var(--shadow-lg);
+            }
+            .fund-card-img {
+                width: 100%;
+                height: 130px;
+                display: block;
+                background: linear-gradient(135deg, var(--moss), var(--sage));
+                position: relative;
+            }
+            .fund-card-emoji {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 48px;
+            }
+            .fund-card-img-wrap {
+                position: relative;
+            }
+            /* Action buttons overlay */
+            .fund-card-actions {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                display: flex;
+                gap: 6px;
+                opacity: 0;
+                transition: opacity 0.2s;
+                z-index: 10;
+            }
+            .fund-card:hover .fund-card-actions {
+                opacity: 1;
+            }
+            .card-action-btn {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 13px;
+                transition: transform 0.15s;
+                backdrop-filter: blur(4px);
+            }
+            .card-action-btn:hover {
+                transform: scale(1.15);
+            }
+            .card-action-btn.edit {
+                background: rgba(255, 255, 255, 0.85);
+                color: var(--forest);
+            }
+            .card-action-btn.del {
+                background: rgba(255, 255, 255, 0.85);
+                color: #c0392b;
+            }
+
+            .fund-card-body {
+                padding: 16px 18px;
+            }
+            .fund-card-name {
+                font-weight: 600;
+                font-size: 15px;
+                color: var(--charcoal);
+                margin-bottom: 4px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .fund-card-name span {
+                font-size: 16px;
+            }
+            .fund-amounts {
+                display: flex;
+                justify-content: space-between;
+                font-size: 12px;
+                color: var(--muted);
+                margin-bottom: 10px;
+            }
+            .fund-amounts strong {
+                color: var(--charcoal);
+            }
+            .progress-track {
+                height: 6px;
+                background: var(--cream);
+                border-radius: 999px;
+                overflow: hidden;
+                margin-bottom: 10px;
+            }
+            .progress-fill {
+                height: 100%;
+                border-radius: 999px;
+                background: linear-gradient(90deg, var(--sage), var(--gold));
+                transition: width 1s ease;
+            }
+            .fund-meta {
+                display: flex;
+                justify-content: space-between;
+                font-size: 12px;
+                color: var(--muted);
+            }
+            .fund-meta .pct {
+                font-weight: 700;
+                color: var(--sage);
+            }
+            .empty-funds {
+                text-align: center;
+                padding: 40px 20px;
+                color: var(--muted);
+                font-size: 14px;
+                grid-column: 1 / -1;
+            }
+            .empty-funds .ei {
+                font-size: 40px;
+                margin-bottom: 10px;
+            }
+
+            /* ── DONUT CHART ── */
+            .panel {
+                background: var(--card-bg);
+                border-radius: var(--radius);
+                padding: 26px;
+                border: 1px solid var(--border);
+                box-shadow: var(--shadow);
+            }
+            .donut-wrap {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+            .donut-svg {
+                width: 180px;
+                height: 180px;
+            }
+            .donut-center {
+                font-family: "Playfair Display", serif;
+                font-size: 22px;
+                font-weight: 700;
+                fill: var(--charcoal);
+            }
+            .donut-sub {
+                font-size: 11px;
+                fill: var(--muted);
+            }
+            .legend {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .legend-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                font-size: 13px;
+            }
+            .legend-label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: var(--charcoal);
+            }
+            .legend-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+            .legend-val {
+                font-weight: 600;
+                color: var(--charcoal);
+            }
+
+            /* ── CONTRIBUTION LOG ── */
+            .log-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .log-table th {
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.07em;
+                color: var(--muted);
+                padding: 0 16px 12px;
+                text-align: left;
+                border-bottom: 1px solid var(--border);
+            }
+            .log-table td {
+                padding: 14px 16px;
+                font-size: 14px;
+                border-bottom: 1px solid var(--border);
+                vertical-align: middle;
+            }
+            .log-table tr:last-child td {
+                border-bottom: none;
+            }
+            .log-table tr {
+                transition: background 0.15s;
+            }
+            .log-table tr:hover td {
+                background: var(--cream);
+            }
+            .log-table .action-cell {
+                display: flex;
+                gap: 6px;
+            }
+            .icon-btn {
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 14px;
+                padding: 4px 6px;
+                border-radius: 6px;
+                transition: background 0.15s;
+                line-height: 1;
+            }
+            .icon-btn:hover {
+                background: var(--cream);
+            }
+            .icon-btn.del:hover {
+                background: #fdecea;
+            }
+            .fund-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                background: var(--cream);
+                border-radius: 999px;
+                padding: 4px 12px;
+                font-size: 12.5px;
+                font-weight: 500;
+            }
+            .amount-pos {
+                color: #2d7a45;
+                font-weight: 700;
+            }
+            .amount-neg {
+                color: #c0392b;
+                font-weight: 700;
+            }
+            .empty-log {
+                text-align: center;
+                padding: 32px;
+                color: var(--muted);
+                font-size: 14px;
+            }
+
+            /* ── MODAL ── */
+            .modal-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(26, 58, 42, 0.45);
+                backdrop-filter: blur(4px);
+                z-index: 500;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            .modal-overlay.open {
+                display: flex;
+            }
+            .modal {
+                background: var(--warm-white);
+                border-radius: var(--radius);
+                padding: 36px;
+                width: 100%;
+                max-width: 460px;
+                box-shadow: 0 32px 80px rgba(26, 58, 42, 0.3);
+                animation: slideUp 0.3s ease;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .modal-title {
+                font-family: "Playfair Display", serif;
+                font-size: 22px;
+                font-weight: 700;
+                color: var(--forest);
+                margin-bottom: 24px;
+            }
+            .form-group {
+                margin-bottom: 18px;
+            }
+            .form-label {
+                display: block;
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--charcoal);
+                margin-bottom: 7px;
+            }
+            .form-control {
+                width: 100%;
+                padding: 11px 14px;
+                border: 1.5px solid var(--border);
+                border-radius: var(--radius-sm);
+                font-family: "DM Sans", sans-serif;
+                font-size: 14px;
+                color: var(--charcoal);
+                background: #fff;
+                outline: none;
+                transition: border-color 0.2s;
+            }
+            .form-control:focus {
+                border-color: var(--sage);
+            }
+            .modal-footer {
+                display: flex;
+                gap: 12px;
+                margin-top: 24px;
+                justify-content: flex-end;
+                flex-wrap: wrap;
+            }
+
+            /* ── CONFIRM MODAL ── */
+            .confirm-modal .modal-title {
+                color: #c0392b;
+            }
+            .confirm-modal p {
+                font-size: 14px;
+                color: var(--muted);
+                margin-bottom: 4px;
+            }
+            .confirm-modal strong {
+                color: var(--charcoal);
+            }
+
+            /* Scrollable table container on mobile */
+            .table-wrap {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* ── TOAST ── */
+            .toast-container {
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                z-index: 999;
+            }
+            .toast {
+                background: var(--forest);
+                color: #fff;
+                padding: 12px 20px;
+                border-radius: 12px;
+                font-size: 13.5px;
+                font-weight: 500;
+                box-shadow: 0 8px 24px rgba(26, 58, 42, 0.3);
+                animation:
+                    toastIn 0.3s ease,
+                    toastOut 0.3s ease 2.7s forwards;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            @keyframes toastIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(16px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            @keyframes toastOut {
+                from {
+                    opacity: 1;
+                }
+                to {
+                    opacity: 0;
+                    transform: translateY(8px);
+                }
+            }
+
+            /* ── RESPONSIVE ── */
+            @media (max-width: 1100px) {
+                .grid-2 {
+                    grid-template-columns: 1fr;
+                }
+                .summary-row {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+            @media (max-width: 768px) {
+                .sidebar {
+                    display: none;
+                }
+                .mobile-topbar {
+                    display: flex;
+                }
+                .sidebar.mobile-open {
+                    display: flex;
+                    width: 220px;
+                    top: 0;
+                    left: 0;
+                    z-index: 250;
+                    animation: slideInLeft 0.25s ease;
+                }
+                .sidebar.mobile-open .nav-label {
+                    opacity: 1;
+                }
+                .sidebar.mobile-open .sidebar-logo {
+                    width: 160px;
+                }
+                @keyframes slideInLeft {
+                    from {
+                        transform: translateX(-100%);
+                    }
+                    to {
+                        transform: translateX(0);
+                    }
+                }
+                .main {
+                    margin-left: 0;
+                    padding-top: 60px;
+                }
+                .topbar {
+                    display: none;
+                }
+                .content {
+                    padding: 20px;
+                }
+                .hero {
+                    flex-direction: column;
+                    padding: 28px 24px;
+                }
+                .hero-stats {
+                    width: 100%;
+                    justify-content: space-around;
+                    flex-wrap: wrap;
+                }
+                .hero-stat {
+                    padding: 14px 20px;
+                }
+                .summary-row {
+                    grid-template-columns: 1fr 1fr;
+                }
+                .hero-text h1 {
+                    font-size: 26px;
+                }
+                .topbar-actions .btn-secondary {
+                    display: none;
+                }
+            }
+            @media (max-width: 480px) {
+                .summary-row {
+                    grid-template-columns: 1fr;
+                }
+                .funds-grid {
+                    grid-template-columns: 1fr;
+                }
+                .hero-stats {
+                    flex-direction: column;
+                    gap: 12px;
+                }
+                .hero-stat {
+                    width: 100%;
+                }
+                .modal {
+                    padding: 24px;
+                }
+                .log-table th:nth-child(3),
+                .log-table td:nth-child(3) {
+                    display: none;
+                }
+            }
+
+            /* micro-animation on load */
+            .fund-card {
+                animation: fadeUp 0.4s ease both;
+            }
+            @keyframes fadeUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .summary-card {
+                animation: fadeUp 0.35s ease both;
+            }
+            .summary-card:nth-child(1) {
+                animation-delay: 0s;
+            }
+            .summary-card:nth-child(2) {
+                animation-delay: 0.06s;
+            }
+            .summary-card:nth-child(3) {
+                animation-delay: 0.12s;
+            }
+            .summary-card:nth-child(4) {
+                animation-delay: 0.18s;
+            }
+
+            /* Emoji picker strip */
+            .emoji-strip {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-top: 8px;
+            }
+            .emoji-opt {
+                font-size: 22px;
+                cursor: pointer;
+                padding: 4px 6px;
+                border-radius: 8px;
+                border: 2px solid transparent;
+                transition:
+                    border-color 0.15s,
+                    background 0.15s;
+                line-height: 1;
+            }
+            .emoji-opt.selected,
+            .emoji-opt:hover {
+                border-color: var(--sage);
+                background: #e6f4eb;
+            }
+
+            /* Color picker strip */
+            .color-strip {
+                display: flex;
+                gap: 10px;
+                margin-top: 8px;
+                flex-wrap: wrap;
+            }
+            .color-opt {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                cursor: pointer;
+                border: 3px solid transparent;
+                transition:
+                    border-color 0.15s,
+                    transform 0.15s;
+            }
+            .color-opt.selected,
+            .color-opt:hover {
+                border-color: var(--charcoal);
+                transform: scale(1.15);
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Mobile Topbar -->
+        <div class="mobile-topbar">
+            <div class="mobile-logo">Sinking<span>Funds</span></div>
+            <button
+                class="hamburger"
+                id="hamburger"
+                onclick="toggleMobileNav()"
+            >
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+        <div
+            class="nav-overlay"
+            id="nav-overlay"
+            onclick="closeMobileNav()"
+        ></div>
+
+        <!-- ── SIDEBAR ── -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">S<span>F</span></div>
+            <div class="nav-item active" data-tab="dashboard">
+                <span class="nav-icon">🏠</span
+                ><span class="nav-label">Dashboard</span>
+            </div>
+            <div class="nav-item" data-tab="funds">
+                <span class="nav-icon">💰</span
+                ><span class="nav-label">My Funds</span>
+            </div>
+            <div class="nav-item" data-tab="contributions">
+                <span class="nav-icon">📋</span
+                ><span class="nav-label">Contributions</span>
+            </div>
+            <div class="nav-item" data-tab="reports">
+                <span class="nav-icon">📊</span
+                ><span class="nav-label">Reports</span>
+            </div>
+            <div class="nav-item" data-tab="settings" style="margin-top: auto">
+                <span class="nav-icon">⚙️</span
+                ><span class="nav-label">Settings</span>
+            </div>
+        </aside>
+
+        <!-- ── MAIN ── -->
+        <div class="main">
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <div class="topbar-title">Sinking Funds</div>
+                <div class="topbar-actions">
+                    <button
+                        id="topbar-log-btn"
+                        class="btn btn-secondary"
+                        onclick="openLogModal()"
+                    >
+                        + Log Contribution
+                    </button>
+                    <button
+                        id="topbar-fund-btn"
+                        class="btn btn-primary"
+                        onclick="openFundModal()"
+                    >
+                        + New Fund
+                    </button>
+                    <div class="avatar" title="Profile">JD</div>
+                </div>
+            </header>
+
+            <!-- CONTENT -->
+            <div class="content">
+                <!-- ══ DASHBOARD TAB ══ -->
+                <div data-section="dashboard">
+                    <!-- HERO -->
+                    <div class="hero">
+                        <div class="hero-text">
+                            <h1>Good morning,<br />Juan! 👋</h1>
+                            <p>You're building wealth, one fund at a time.</p>
+                        </div>
+                        <div class="hero-stats">
+                            <div class="hero-stat">
+                                <div class="hero-stat-val" id="hero-saved">
+                                    ₱0
+                                </div>
+                                <div class="hero-stat-label">Total Saved</div>
+                            </div>
+                            <div class="hero-stat">
+                                <div class="hero-stat-val" id="hero-goal">
+                                    ₱0
+                                </div>
+                                <div class="hero-stat-label">Total Goal</div>
+                            </div>
+                            <div class="hero-stat">
+                                <div class="hero-stat-val" id="hero-count">
+                                    0
+                                </div>
+                                <div class="hero-stat-label">Active Funds</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUMMARY CARDS -->
+                    <div class="summary-row">
+                        <div class="summary-card">
+                            <div
+                                class="summary-card-icon"
+                                style="background: #e6f4eb"
+                            >
+                                💵
+                            </div>
+                            <div class="summary-card-val" id="sum-balance">
+                                ₱0
+                            </div>
+                            <div class="summary-card-label">
+                                Current Balance
+                            </div>
+                            <div
+                                class="badge badge-green"
+                                id="sum-balance-badge"
+                            >
+                                —
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div
+                                class="summary-card-icon"
+                                style="background: #fef6e0"
+                            >
+                                🎯
+                            </div>
+                            <div class="summary-card-val" id="sum-target">
+                                ₱0
+                            </div>
+                            <div class="summary-card-label">Total Target</div>
+                            <div class="badge badge-amber" id="sum-pct">
+                                0% complete
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div
+                                class="summary-card-icon"
+                                style="background: #e8f0fe"
+                            >
+                                📅
+                            </div>
+                            <div class="summary-card-val" id="sum-monthly">
+                                ₱0
+                            </div>
+                            <div class="summary-card-label">Monthly Budget</div>
+                            <div class="badge badge-blue" id="sum-avg">
+                                ₱0 / fund avg
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div
+                                class="summary-card-icon"
+                                style="background: #fdecea"
+                            >
+                                📂
+                            </div>
+                            <div class="summary-card-val" id="sum-funds">0</div>
+                            <div class="summary-card-label">Total Funds</div>
+                            <div class="badge badge-red" id="sum-logs">
+                                0 log entries
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FUNDS + DONUT -->
+                    <div class="grid-2">
+                        <div>
+                            <div class="section-header">
+                                <div class="section-title">Sinking Funds</div>
+                                <button
+                                    class="btn btn-primary"
+                                    style="font-size: 12px; padding: 7px 16px"
+                                    onclick="openFundModal()"
+                                >
+                                    + New Fund
+                                </button>
+                            </div>
+                            <div class="funds-grid" id="funds-grid"></div>
+                        </div>
+
+                        <!-- DONUT + LEGEND -->
+                        <div>
+                            <div class="section-header">
+                                <div class="section-title">
+                                    Balance Breakdown
+                                </div>
+                            </div>
+                            <div class="panel">
+                                <div class="donut-wrap">
+                                    <svg
+                                        class="donut-svg"
+                                        id="donut-svg"
+                                        viewBox="0 0 180 180"
+                                    >
+                                        <circle
+                                            cx="90"
+                                            cy="90"
+                                            r="70"
+                                            fill="none"
+                                            stroke="#f0ebe0"
+                                            stroke-width="22"
+                                        />
+                                        <text
+                                            x="90"
+                                            y="85"
+                                            text-anchor="middle"
+                                            class="donut-center"
+                                            id="donut-total"
+                                        >
+                                            ₱0
+                                        </text>
+                                        <text
+                                            x="90"
+                                            y="103"
+                                            text-anchor="middle"
+                                            class="donut-sub"
+                                        >
+                                            Total Balance
+                                        </text>
+                                    </svg>
+                                    <div class="legend" id="donut-legend"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONTRIBUTION LOG -->
+                    <div class="panel">
+                        <div class="section-header">
+                            <div class="section-title">
+                                Recent Contributions
+                            </div>
+                            <button
+                                class="btn btn-secondary"
+                                style="font-size: 12px; padding: 7px 14px"
+                                onclick="openLogModal()"
+                            >
+                                + Log
+                            </button>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="log-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fund</th>
+                                        <th>Date</th>
+                                        <th>Note</th>
+                                        <th>Amount</th>
+                                        <th>Type</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="log-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div
+                            id="log-empty"
+                            class="empty-log"
+                            style="display: none"
+                        >
+                            No contributions logged yet.
+                        </div>
+                    </div>
+                </div>
+                <!-- /dashboard section -->
+
+                <!-- ══ FUNDS TAB ══ -->
+                <div data-section="funds" style="display: none">
+                    <div class="section-header">
+                        <div class="section-title">My Funds</div>
+                        <button
+                            class="btn btn-primary"
+                            onclick="openFundModal()"
+                        >
+                            + New Fund
+                        </button>
+                    </div>
+                    <div class="funds-grid" id="funds-grid-tab"></div>
+                </div>
+
+                <!-- ══ CONTRIBUTIONS TAB ══ -->
+                <div data-section="contributions" style="display: none">
+                    <div class="section-header">
+                        <div class="section-title">All Contributions</div>
+                        <button
+                            class="btn btn-primary"
+                            onclick="openLogModal()"
+                        >
+                            + Log Contribution
+                        </button>
+                    </div>
+                    <div class="panel">
+                        <div class="table-wrap">
+                            <table class="log-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fund</th>
+                                        <th>Date</th>
+                                        <th>Note</th>
+                                        <th>Amount</th>
+                                        <th>Type</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="log-tbody-tab"></tbody>
+                            </table>
+                        </div>
+                        <div
+                            id="log-empty-tab"
+                            class="empty-log"
+                            style="display: none"
+                        >
+                            No contributions logged yet.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══ REPORTS TAB ══ -->
+                <div data-section="reports" style="display: none">
+                    <div class="section-header">
+                        <div class="section-title">Reports</div>
+                    </div>
+                    <!-- Summary Stats -->
+                    <div class="summary-row" style="margin-bottom: 24px">
+                        <div class="summary-card">
+                            <div
+                                class="summary-card-icon"
+                                style="background: #e6f4eb"
+                            >
+                                📈
+                            </div>
+                            <div class="summary-card-val" id="rpt-total-saved">
+                                ₱0
+                            </div>
+                            <div class="summary-card-label">Total Saved</div>
+                        </div>
+                        <div class="summary-card">
+                            <div
+                                class="summary-card-icon"
+                                style="background: #fef6e0"
+                            >
+                                🎯
+                            </div>
+                            <div class="summary-card-val" id="rpt-total-goal">
+                                ₱0
+                            </div>
+                            <div class="summary-card-label">Total Goal</div>
+                        </div>
+                        <div class="summary-card">
+                            <div
+                                class="summary-card-icon"
+                                style="background: #e8f0fe"
+                            >
+                                💸
+                            </div>
+                            <div
+                                class="summary-card-val"
+                                id="rpt-total-deposits"
+                            >
+                                ₱0
+                            </div>
+                            <div class="summary-card-label">
+                                Total Deposited
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div
+                                class="summary-card-icon"
+                                style="background: #fdecea"
+                            >
+                                🏧
+                            </div>
+                            <div
+                                class="summary-card-val"
+                                id="rpt-total-withdrawals"
+                            >
+                                ₱0
+                            </div>
+                            <div class="summary-card-label">
+                                Total Withdrawn
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Per-fund progress table -->
+                    <div class="panel">
+                        <div class="section-header">
+                            <div class="section-title" style="font-size: 16px">
+                                Fund Progress
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="log-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fund</th>
+                                        <th>Saved</th>
+                                        <th>Goal</th>
+                                        <th>Progress</th>
+                                        <th>Monthly</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rpt-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div
+                            id="rpt-empty"
+                            class="empty-log"
+                            style="display: none"
+                        >
+                            No funds to report yet.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══ SETTINGS TAB ══ -->
+                <div data-section="settings" style="display: none">
+                    <div class="section-header">
+                        <div class="section-title">Settings</div>
+                    </div>
+                    <div class="panel" style="max-width: 520px">
+                        <p
+                            style="
+                                font-size: 14px;
+                                color: var(--muted);
+                                text-align: center;
+                                padding: 40px 20px;
+                            "
+                        >
+                            ⚙️ Settings coming soon.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <!-- /content -->
+        </div>
+        <!-- /main -->
+
+        <!-- ── MODAL: FUND (Create / Edit) ── -->
+        <div class="modal-overlay" id="fund-modal">
+            <div class="modal">
+                <div class="modal-title" id="fund-modal-title">
+                    ✨ Create New Fund
+                </div>
+                <input type="hidden" id="fund-edit-id" />
+                <div class="form-group">
+                    <label class="form-label">Fund Name</label>
+                    <input
+                        class="form-control"
+                        id="fund-name"
+                        type="text"
+                        placeholder="e.g. Emergency Fund"
+                    />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Icon (pick one)</label>
+                    <div class="emoji-strip" id="emoji-strip">
+                        <!-- populated by JS -->
+                    </div>
+                    <input type="hidden" id="fund-emoji" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Card Color</label>
+                    <div class="color-strip" id="color-strip"></div>
+                    <input type="hidden" id="fund-color" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Target Amount (₱)</label>
+                    <input
+                        class="form-control"
+                        id="fund-target"
+                        type="number"
+                        placeholder="0.00"
+                        min="0"
+                    />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Current Balance (₱)</label>
+                    <input
+                        class="form-control"
+                        id="fund-saved"
+                        type="number"
+                        placeholder="0.00"
+                        min="0"
+                    />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Monthly Contribution (₱)</label>
+                    <input
+                        class="form-control"
+                        id="fund-monthly"
+                        type="number"
+                        placeholder="0.00"
+                        min="0"
+                    />
+                </div>
+                <div class="modal-footer">
+                    <button
+                        class="btn btn-secondary"
+                        onclick="closeModal('fund-modal')"
+                    >
+                        Cancel
+                    </button>
+                    <button class="btn btn-primary" onclick="saveFund()">
+                        Save Fund
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── MODAL: LOG CONTRIBUTION (Create / Edit) ── -->
+        <div class="modal-overlay" id="log-modal">
+            <div class="modal">
+                <div class="modal-title" id="log-modal-title">
+                    📝 Log Contribution
+                </div>
+                <input type="hidden" id="log-edit-id" />
+                <div class="form-group">
+                    <label class="form-label">Select Fund</label>
+                    <select class="form-control" id="log-fund"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <select class="form-control" id="log-type">
+                        <option value="Deposit">Deposit</option>
+                        <option value="Withdrawal">Withdrawal</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (₱)</label>
+                    <input
+                        class="form-control"
+                        id="log-amount"
+                        type="number"
+                        placeholder="0.00"
+                        min="0"
+                    />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input class="form-control" id="log-date" type="date" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Note (optional)</label>
+                    <input
+                        class="form-control"
+                        id="log-note"
+                        type="text"
+                        placeholder="e.g. Monthly contribution"
+                    />
+                </div>
+                <div class="modal-footer">
+                    <button
+                        class="btn btn-secondary"
+                        onclick="closeModal('log-modal')"
+                    >
+                        Cancel
+                    </button>
+                    <button class="btn btn-primary" onclick="saveLog()">
+                        Save Entry
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── MODAL: CONFIRM DELETE ── -->
+        <div class="modal-overlay" id="confirm-modal">
+            <div class="modal confirm-modal">
+                <div class="modal-title">🗑️ Confirm Delete</div>
+                <p id="confirm-msg">Are you sure you want to delete this?</p>
+                <p
+                    style="
+                        margin-top: 8px;
+                        font-size: 13px;
+                        color: var(--muted);
+                    "
+                >
+                    This action cannot be undone.
+                </p>
+                <div class="modal-footer">
+                    <button
+                        class="btn btn-secondary"
+                        onclick="closeModal('confirm-modal')"
+                    >
+                        Cancel
+                    </button>
+                    <button class="btn btn-danger" id="confirm-delete-btn">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div class="toast-container" id="toast-container"></div>
+
+        <!-- Mobile Quick-Add FABs -->
+        <div
+            style="
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                z-index: 100;
+            "
+            id="mobile-fabs"
+        ></div>
+
+        <script>
+            /* ═══════════════════════════════
+   DATA STORE
+═══════════════════════════════ */
+            const FUND_COLORS = [
+                "linear-gradient(135deg,#1a3a2a,#4e8b5f)",
+                "linear-gradient(135deg,#7b2d2d,#c0392b)",
+                "linear-gradient(135deg,#2c3e50,#4a6fa5)",
+                "linear-gradient(135deg,#5b3a8a,#9b59b6)",
+                "linear-gradient(135deg,#1a3a2a,#c9a84c)",
+                "linear-gradient(135deg,#1a5a3a,#27ae60)",
+                "linear-gradient(135deg,#7a4e00,#e67e22)",
+                "linear-gradient(135deg,#004a6e,#2980b9)",
+            ];
+            const COLOR_DOTS = [
+                "#4e8b5f",
+                "#c0392b",
+                "#4a6fa5",
+                "#9b59b6",
+                "#c9a84c",
+                "#27ae60",
+                "#e67e22",
+                "#2980b9",
+            ];
+            const EMOJIS = [
+                "✈️",
+                "🎁",
+                "🔧",
+                "📚",
+                "🏠",
+                "💻",
+                "🏥",
+                "💍",
+                "🌴",
+                "🚗",
+                "🎓",
+                "🍀",
+                "🎯",
+                "💡",
+                "🐾",
+                "🏋️",
+            ];
+
+            let funds = [
+                {
+                    id: uid(),
+                    name: "Vacation",
+                    emoji: "✈️",
+                    color: FUND_COLORS[0],
+                    target: 10000,
+                    saved: 1300,
+                    monthly: 700,
+                },
+                {
+                    id: uid(),
+                    name: "Holiday Gifts",
+                    emoji: "🎁",
+                    color: FUND_COLORS[1],
+                    target: 5000,
+                    saved: 700,
+                    monthly: 350,
+                },
+                {
+                    id: uid(),
+                    name: "Car Repair",
+                    emoji: "🔧",
+                    color: FUND_COLORS[2],
+                    target: 5000,
+                    saved: 250,
+                    monthly: 480,
+                },
+                {
+                    id: uid(),
+                    name: "Education",
+                    emoji: "📚",
+                    color: FUND_COLORS[3],
+                    target: 15000,
+                    saved: 8400,
+                    monthly: 330,
+                },
+                {
+                    id: uid(),
+                    name: "Home Repair",
+                    emoji: "🏠",
+                    color: FUND_COLORS[4],
+                    target: 10000,
+                    saved: 2200,
+                    monthly: 500,
+                },
+            ];
+
+            let logs = [
+                {
+                    id: uid(),
+                    fundId: funds[3].id,
+                    date: "2026-04-15",
+                    note: "Monthly contribution",
+                    amount: 500,
+                    type: "Deposit",
+                },
+                {
+                    id: uid(),
+                    fundId: funds[0].id,
+                    date: "2026-04-10",
+                    note: "Bonus allocation",
+                    amount: 300,
+                    type: "Deposit",
+                },
+                {
+                    id: uid(),
+                    fundId: funds[4].id,
+                    date: "2026-04-05",
+                    note: "Faucet replaced",
+                    amount: 800,
+                    type: "Withdrawal",
+                },
+                {
+                    id: uid(),
+                    fundId: funds[1].id,
+                    date: "2026-04-01",
+                    note: "Monthly contribution",
+                    amount: 200,
+                    type: "Deposit",
+                },
+                {
+                    id: uid(),
+                    fundId: funds[2].id,
+                    date: "2026-03-28",
+                    note: "Monthly contribution",
+                    amount: 250,
+                    type: "Deposit",
+                },
+            ];
+
+            function uid() {
+                return Math.random().toString(36).slice(2, 10);
+            }
+
+            /* ═══════════════════════════════
+   RENDER
+═══════════════════════════════ */
+            function fmt(n) {
+                return (
+                    "₱" +
+                    Number(n).toLocaleString("en-PH", {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                    })
+                );
+            }
+
+            function render() {
+                renderSummary();
+                renderFunds();
+                renderDonut();
+                renderLogs();
+                renderFundsTab();
+                renderLogsTab();
+                renderReports();
+            }
+
+            function renderSummary() {
+                const totalSaved = funds.reduce((a, f) => a + f.saved, 0);
+                const totalGoal = funds.reduce((a, f) => a + f.target, 0);
+                const totalMonthly = funds.reduce((a, f) => a + f.monthly, 0);
+                const pct =
+                    totalGoal > 0
+                        ? ((totalSaved / totalGoal) * 100).toFixed(1)
+                        : 0;
+
+                document.getElementById("hero-saved").textContent =
+                    fmt(totalSaved);
+                document.getElementById("hero-goal").textContent =
+                    fmt(totalGoal);
+                document.getElementById("hero-count").textContent =
+                    funds.length;
+
+                document.getElementById("sum-balance").textContent =
+                    fmt(totalSaved);
+                document.getElementById("sum-target").textContent =
+                    fmt(totalGoal);
+                document.getElementById("sum-monthly").textContent =
+                    fmt(totalMonthly);
+                document.getElementById("sum-funds").textContent = funds.length;
+
+                document.getElementById("sum-pct").textContent =
+                    pct + "% complete";
+                document.getElementById("sum-avg").textContent =
+                    fmt(
+                        funds.length
+                            ? Math.round(totalMonthly / funds.length)
+                            : 0,
+                    ) + " / fund avg";
+                document.getElementById("sum-logs").textContent =
+                    logs.length +
+                    " log entr" +
+                    (logs.length === 1 ? "y" : "ies");
+                document.getElementById("sum-balance-badge").textContent =
+                    "💰 " +
+                    funds.length +
+                    " active fund" +
+                    (funds.length !== 1 ? "s" : "");
+            }
+
+            function renderFunds() {
+                const grid = document.getElementById("funds-grid");
+                if (funds.length === 0) {
+                    grid.innerHTML = `<div class="empty-funds"><div class="ei">🌱</div>No funds yet. Create your first one!</div>`;
+                    return;
+                }
+                grid.innerHTML = funds
+                    .map((f, i) => {
+                        const pct =
+                            f.target > 0
+                                ? Math.min(
+                                      100,
+                                      Math.round((f.saved / f.target) * 100),
+                                  )
+                                : 0;
+                        const needed =
+                            f.target > f.saved
+                                ? fmt(f.monthly) + "/mo needed"
+                                : "🎉 Goal reached!";
+                        return `
+    <div class="fund-card" style="animation-delay:${i * 0.05}s">
+      <div class="fund-card-img-wrap">
+        <div class="fund-card-img" style="background:${f.color}">
+          <div class="fund-card-emoji">${f.emoji}</div>
+        </div>
+        <div class="fund-card-actions">
+          <button class="card-action-btn edit" title="Edit" onclick="editFund('${f.id}')">✏️</button>
+          <button class="card-action-btn del"  title="Delete" onclick="confirmDeleteFund('${f.id}')">🗑️</button>
+        </div>
+      </div>
+      <div class="fund-card-body">
+        <div class="fund-card-name"><span>${f.emoji}</span> ${f.name}</div>
+        <div class="fund-amounts">
+          <span>Saved: <strong>${fmt(f.saved)}</strong></span>
+          <span>Goal: <strong>${fmt(f.target)}</strong></span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="fund-meta">
+          <span>${needed}</span>
+          <span class="pct">${pct}%</span>
+        </div>
+      </div>
+    </div>`;
+                    })
+                    .join("");
+            }
+
+            function renderDonut() {
+                const svg = document.getElementById("donut-svg");
+                const legend = document.getElementById("donut-legend");
+                const total = funds.reduce((a, f) => a + f.saved, 0);
+
+                document.getElementById("donut-total").textContent = fmt(total);
+
+                // Remove old dynamic circles
+                svg.querySelectorAll(".donut-seg").forEach((e) => e.remove());
+
+                if (total === 0 || funds.length === 0) {
+                    legend.innerHTML =
+                        '<div style="color:var(--muted);font-size:13px;text-align:center">No data yet</div>';
+                    return;
+                }
+
+                const C = 2 * Math.PI * 70; // circumference ≈ 439.8
+                let offset = 0;
+
+                funds.forEach((f, i) => {
+                    const share = f.saved / total;
+                    const arc = share * C;
+                    const color = COLOR_DOTS[i % COLOR_DOTS.length];
+                    const circle = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "circle",
+                    );
+                    circle.setAttribute("cx", "90");
+                    circle.setAttribute("cy", "90");
+                    circle.setAttribute("r", "70");
+                    circle.setAttribute("fill", "none");
+                    circle.setAttribute("stroke", color);
+                    circle.setAttribute("stroke-width", "22");
+                    circle.setAttribute(
+                        "stroke-dasharray",
+                        `${arc} ${C - arc}`,
+                    );
+                    circle.setAttribute("stroke-dashoffset", -offset);
+                    circle.setAttribute("stroke-linecap", "round");
+                    circle.classList.add("donut-seg");
+                    svg.insertBefore(
+                        circle,
+                        svg.querySelector(".donut-center"),
+                    );
+                    offset += arc;
+                });
+
+                legend.innerHTML = funds
+                    .map((f, i) => {
+                        const color = COLOR_DOTS[i % COLOR_DOTS.length];
+                        const share =
+                            total > 0 ? Math.round((f.saved / total) * 100) : 0;
+                        return `
+    <div class="legend-item">
+      <div class="legend-label"><div class="legend-dot" style="background:${color}"></div>${f.emoji} ${f.name}</div>
+      <span class="legend-val">${fmt(f.saved)} <span style="color:var(--muted);font-weight:400">(${share}%)</span></span>
+    </div>`;
+                    })
+                    .join("");
+            }
+
+            function renderLogs() {
+                const tbody = document.getElementById("log-tbody");
+                const empty = document.getElementById("log-empty");
+
+                if (logs.length === 0) {
+                    tbody.innerHTML = "";
+                    empty.style.display = "";
+                    return;
+                }
+                empty.style.display = "none";
+
+                const sorted = [...logs].sort((a, b) =>
+                    b.date.localeCompare(a.date),
+                );
+
+                tbody.innerHTML = sorted
+                    .map((l) => {
+                        const fund = funds.find((f) => f.id === l.fundId);
+                        const fundLabel = fund
+                            ? `${fund.emoji} ${fund.name}`
+                            : "—";
+                        const sign = l.type === "Deposit" ? "+" : "-";
+                        const cls =
+                            l.type === "Deposit" ? "amount-pos" : "amount-neg";
+                        const badge =
+                            l.type === "Deposit"
+                                ? '<span class="badge badge-green">Deposit</span>'
+                                : '<span class="badge badge-red">Withdrawal</span>';
+                        const dateFormatted = new Date(
+                            l.date + "T00:00:00",
+                        ).toLocaleDateString("en-PH", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                        });
+                        return `
+    <tr>
+      <td><div class="fund-pill">${fundLabel}</div></td>
+      <td>${dateFormatted}</td>
+      <td>${l.note || "—"}</td>
+      <td class="${cls}">${sign}${fmt(l.amount)}</td>
+      <td>${badge}</td>
+      <td>
+        <div class="action-cell">
+          <button class="icon-btn" title="Edit" onclick="editLog('${l.id}')">✏️</button>
+          <button class="icon-btn del" title="Delete" onclick="confirmDeleteLog('${l.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+                    })
+                    .join("");
+            }
+
+            /* ═══════════════════════════════
+   FUNDS TAB
+═══════════════════════════════ */
+            function renderFundsTab() {
+                const grid = document.getElementById("funds-grid-tab");
+                if (!grid) return;
+                if (funds.length === 0) {
+                    grid.innerHTML = `<div class="empty-funds"><div class="ei">🌱</div>No funds yet. Create your first one!</div>`;
+                    return;
+                }
+                grid.innerHTML = funds
+                    .map((f, i) => {
+                        const pct =
+                            f.target > 0
+                                ? Math.min(
+                                      100,
+                                      Math.round((f.saved / f.target) * 100),
+                                  )
+                                : 0;
+                        const needed =
+                            f.target > f.saved
+                                ? fmt(f.monthly) + "/mo needed"
+                                : "🎉 Goal reached!";
+                        return `
+    <div class="fund-card" style="animation-delay:${i * 0.05}s">
+      <div class="fund-card-img-wrap">
+        <div class="fund-card-img" style="background:${f.color}">
+          <div class="fund-card-emoji">${f.emoji}</div>
+        </div>
+        <div class="fund-card-actions">
+          <button class="card-action-btn edit" title="Edit" onclick="editFund('${f.id}')">✏️</button>
+          <button class="card-action-btn del"  title="Delete" onclick="confirmDeleteFund('${f.id}')">🗑️</button>
+        </div>
+      </div>
+      <div class="fund-card-body">
+        <div class="fund-card-name"><span>${f.emoji}</span> ${f.name}</div>
+        <div class="fund-amounts">
+          <span>Saved: <strong>${fmt(f.saved)}</strong></span>
+          <span>Goal: <strong>${fmt(f.target)}</strong></span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="fund-meta">
+          <span>${needed}</span>
+          <span class="pct">${pct}%</span>
+        </div>
+      </div>
+    </div>`;
+                    })
+                    .join("");
+            }
+
+            /* ═══════════════════════════════
+   CONTRIBUTIONS TAB
+═══════════════════════════════ */
+            function renderLogsTab() {
+                const tbody = document.getElementById("log-tbody-tab");
+                const empty = document.getElementById("log-empty-tab");
+                if (!tbody) return;
+
+                if (logs.length === 0) {
+                    tbody.innerHTML = "";
+                    empty.style.display = "";
+                    return;
+                }
+                empty.style.display = "none";
+
+                const sorted = [...logs].sort((a, b) =>
+                    b.date.localeCompare(a.date),
+                );
+                tbody.innerHTML = sorted
+                    .map((l) => {
+                        const fund = funds.find((f) => f.id === l.fundId);
+                        const fundLabel = fund
+                            ? `${fund.emoji} ${fund.name}`
+                            : "—";
+                        const sign = l.type === "Deposit" ? "+" : "-";
+                        const cls =
+                            l.type === "Deposit" ? "amount-pos" : "amount-neg";
+                        const badge =
+                            l.type === "Deposit"
+                                ? '<span class="badge badge-green">Deposit</span>'
+                                : '<span class="badge badge-red">Withdrawal</span>';
+                        const dateFormatted = new Date(
+                            l.date + "T00:00:00",
+                        ).toLocaleDateString("en-PH", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                        });
+                        return `
+    <tr>
+      <td><div class="fund-pill">${fundLabel}</div></td>
+      <td>${dateFormatted}</td>
+      <td>${l.note || "—"}</td>
+      <td class="${cls}">${sign}${fmt(l.amount)}</td>
+      <td>${badge}</td>
+      <td>
+        <div class="action-cell">
+          <button class="icon-btn" title="Edit" onclick="editLog('${l.id}')">✏️</button>
+          <button class="icon-btn del" title="Delete" onclick="confirmDeleteLog('${l.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+                    })
+                    .join("");
+            }
+
+            /* ═══════════════════════════════
+   REPORTS TAB
+═══════════════════════════════ */
+            function renderReports() {
+                const totalSaved = funds.reduce((a, f) => a + f.saved, 0);
+                const totalGoal = funds.reduce((a, f) => a + f.target, 0);
+                const totalDeposits = logs
+                    .filter((l) => l.type === "Deposit")
+                    .reduce((a, l) => a + l.amount, 0);
+                const totalWithdrawals = logs
+                    .filter((l) => l.type === "Withdrawal")
+                    .reduce((a, l) => a + l.amount, 0);
+
+                const s = document.getElementById("rpt-total-saved");
+                const g = document.getElementById("rpt-total-goal");
+                const d = document.getElementById("rpt-total-deposits");
+                const w = document.getElementById("rpt-total-withdrawals");
+                if (s) s.textContent = fmt(totalSaved);
+                if (g) g.textContent = fmt(totalGoal);
+                if (d) d.textContent = fmt(totalDeposits);
+                if (w) w.textContent = fmt(totalWithdrawals);
+
+                const tbody = document.getElementById("rpt-tbody");
+                const empty = document.getElementById("rpt-empty");
+                if (!tbody) return;
+
+                if (funds.length === 0) {
+                    tbody.innerHTML = "";
+                    empty.style.display = "";
+                    return;
+                }
+                empty.style.display = "none";
+
+                tbody.innerHTML = funds
+                    .map((f) => {
+                        const pct =
+                            f.target > 0
+                                ? Math.min(
+                                      100,
+                                      Math.round((f.saved / f.target) * 100),
+                                  )
+                                : 0;
+                        const remaining = Math.max(0, f.target - f.saved);
+                        const status =
+                            pct >= 100
+                                ? '<span class="badge badge-green">🎉 Complete</span>'
+                                : pct >= 50
+                                  ? '<span class="badge badge-blue">On Track</span>'
+                                  : '<span class="badge badge-amber">In Progress</span>';
+                        return `
+    <tr>
+      <td><div class="fund-pill">${f.emoji} ${f.name}</div></td>
+      <td class="amount-pos">${fmt(f.saved)}</td>
+      <td>${fmt(f.target)}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="progress-track" style="flex:1;margin:0">
+            <div class="progress-fill" style="width:${pct}%"></div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:var(--sage);white-space:nowrap">${pct}%</span>
+        </div>
+      </td>
+      <td>${fmt(f.monthly)}/mo</td>
+      <td>${status}</td>
+    </tr>`;
+                    })
+                    .join("");
+            }
+
+            /* ═══════════════════════════════
+   TAB SWITCHER
+═══════════════════════════════ */
+            const TAB_TITLES = {
+                dashboard: "Sinking Funds",
+                funds: "My Funds",
+                contributions: "Contributions",
+                reports: "Reports",
+                settings: "Settings",
+            };
+
+            function switchTab(tabName) {
+                // hide all sections
+                document.querySelectorAll("[data-section]").forEach((el) => {
+                    el.style.display = "none";
+                });
+
+                // show matching section
+                const section = document.querySelector(
+                    `[data-section="${tabName}"]`,
+                );
+                if (section) section.style.display = "";
+
+                // update active nav item
+                document
+                    .querySelectorAll(".nav-item[data-tab]")
+                    .forEach((el) => {
+                        el.classList.toggle(
+                            "active",
+                            el.dataset.tab === tabName,
+                        );
+                    });
+
+                // update topbar title
+                const titleEl = document.querySelector(".topbar-title");
+                if (titleEl)
+                    titleEl.textContent =
+                        TAB_TITLES[tabName] || "Sinking Funds";
+
+                // update topbar action buttons based on tab
+                const logBtn = document.getElementById("topbar-log-btn");
+                const fundBtn = document.getElementById("topbar-fund-btn");
+                if (logBtn && fundBtn) {
+                    logBtn.style.display =
+                        tabName === "contributions"
+                            ? ""
+                            : tabName === "dashboard"
+                              ? ""
+                              : "none";
+                    fundBtn.style.display =
+                        tabName === "funds" || tabName === "dashboard"
+                            ? ""
+                            : "none";
+                }
+            }
+
+            // attach click listener to all nav items
+            document.querySelectorAll(".nav-item[data-tab]").forEach((el) => {
+                el.addEventListener("click", () => {
+                    switchTab(el.dataset.tab);
+                    closeMobileNav();
+                });
+            });
+
+            function openFundModal(fund = null) {
+                document.getElementById("fund-modal-title").textContent = fund
+                    ? "✏️ Edit Fund"
+                    : "✨ Create New Fund";
+                document.getElementById("fund-edit-id").value = fund
+                    ? fund.id
+                    : "";
+                document.getElementById("fund-name").value = fund
+                    ? fund.name
+                    : "";
+                document.getElementById("fund-target").value = fund
+                    ? fund.target
+                    : "";
+                document.getElementById("fund-saved").value = fund
+                    ? fund.saved
+                    : "";
+                document.getElementById("fund-monthly").value = fund
+                    ? fund.monthly
+                    : "";
+
+                // Emoji strip
+                const sel = fund ? fund.emoji : EMOJIS[0];
+                document.getElementById("fund-emoji").value = sel;
+                document.getElementById("emoji-strip").innerHTML = EMOJIS.map(
+                    (e) =>
+                        `<span class="emoji-opt${e === sel ? " selected" : ""}" onclick="selectEmoji('${e}')">${e}</span>`,
+                ).join("");
+
+                // Color strip
+                const selColor = fund ? fund.color : FUND_COLORS[0];
+                document.getElementById("fund-color").value = selColor;
+                document.getElementById("color-strip").innerHTML =
+                    FUND_COLORS.map(
+                        (c, i) =>
+                            `<div class="color-opt${c === selColor ? " selected" : ""}" style="background:${COLOR_DOTS[i]}" data-color="${c}" onclick="selectColor('${c}',${i})"></div>`,
+                    ).join("");
+
+                openModal("fund-modal");
+            }
+
+            function selectEmoji(e) {
+                document.getElementById("fund-emoji").value = e;
+                document
+                    .querySelectorAll(".emoji-opt")
+                    .forEach((el) =>
+                        el.classList.toggle("selected", el.textContent === e),
+                    );
+            }
+
+            function selectColor(c, idx) {
+                document.getElementById("fund-color").value = c;
+                document
+                    .querySelectorAll(".color-opt")
+                    .forEach((el) => el.classList.remove("selected"));
+                document
+                    .querySelectorAll(".color-opt")
+                    [idx].classList.add("selected");
+            }
+
+            function saveFund() {
+                const name = document.getElementById("fund-name").value.trim();
+                const emoji = document.getElementById("fund-emoji").value;
+                const color = document.getElementById("fund-color").value;
+                const target =
+                    parseFloat(document.getElementById("fund-target").value) ||
+                    0;
+                const saved =
+                    parseFloat(document.getElementById("fund-saved").value) ||
+                    0;
+                const monthly =
+                    parseFloat(document.getElementById("fund-monthly").value) ||
+                    0;
+                const editId = document.getElementById("fund-edit-id").value;
+
+                if (!name) {
+                    alert("Please enter a fund name.");
+                    return;
+                }
+
+                if (editId) {
+                    const idx = funds.findIndex((f) => f.id === editId);
+                    if (idx > -1)
+                        funds[idx] = {
+                            ...funds[idx],
+                            name,
+                            emoji,
+                            color,
+                            target,
+                            saved,
+                            monthly,
+                        };
+                    toast("✅ Fund updated!");
+                } else {
+                    funds.push({
+                        id: uid(),
+                        name,
+                        emoji,
+                        color,
+                        target,
+                        saved,
+                        monthly,
+                    });
+                    toast("🌱 Fund created!");
+                }
+
+                closeModal("fund-modal");
+                render();
+            }
+
+            function editFund(id) {
+                const fund = funds.find((f) => f.id === id);
+                if (fund) openFundModal(fund);
+            }
+
+            function confirmDeleteFund(id) {
+                const fund = funds.find((f) => f.id === id);
+                if (!fund) return;
+                document.getElementById("confirm-msg").innerHTML =
+                    `Delete fund <strong>"${fund.emoji} ${fund.name}"</strong>? All related logs will also be removed.`;
+                document.getElementById("confirm-delete-btn").onclick = () => {
+                    funds = funds.filter((f) => f.id !== id);
+                    logs = logs.filter((l) => l.fundId !== id);
+                    closeModal("confirm-modal");
+                    render();
+                    toast("🗑️ Fund deleted.");
+                };
+                openModal("confirm-modal");
+            }
+
+            /* ═══════════════════════════════
+   LOG CRUD
+═══════════════════════════════ */
+            function openLogModal(log = null) {
+                // Populate fund select
+                const sel = document.getElementById("log-fund");
+                sel.innerHTML = funds.length
+                    ? funds
+                          .map(
+                              (f) =>
+                                  `<option value="${f.id}">${f.emoji} ${f.name}</option>`,
+                          )
+                          .join("")
+                    : '<option value="">— No funds available —</option>';
+
+                document.getElementById("log-modal-title").textContent = log
+                    ? "✏️ Edit Entry"
+                    : "📝 Log Contribution";
+                document.getElementById("log-edit-id").value = log
+                    ? log.id
+                    : "";
+                document.getElementById("log-type").value = log
+                    ? log.type
+                    : "Deposit";
+                document.getElementById("log-amount").value = log
+                    ? log.amount
+                    : "";
+                document.getElementById("log-date").value = log
+                    ? log.date
+                    : new Date().toISOString().slice(0, 10);
+                document.getElementById("log-note").value = log ? log.note : "";
+
+                if (log) sel.value = log.fundId;
+
+                openModal("log-modal");
+            }
+
+            function saveLog() {
+                const fundId = document.getElementById("log-fund").value;
+                const type = document.getElementById("log-type").value;
+                const amount =
+                    parseFloat(document.getElementById("log-amount").value) ||
+                    0;
+                const date = document.getElementById("log-date").value;
+                const note = document.getElementById("log-note").value.trim();
+                const editId = document.getElementById("log-edit-id").value;
+
+                if (!fundId) {
+                    alert("Please select a fund.");
+                    return;
+                }
+                if (amount <= 0) {
+                    alert("Please enter a valid amount.");
+                    return;
+                }
+                if (!date) {
+                    alert("Please select a date.");
+                    return;
+                }
+
+                if (editId) {
+                    const idx = logs.findIndex((l) => l.id === editId);
+                    if (idx > -1)
+                        logs[idx] = {
+                            ...logs[idx],
+                            fundId,
+                            type,
+                            amount,
+                            date,
+                            note,
+                        };
+                    toast("✅ Entry updated!");
+                } else {
+                    logs.push({ id: uid(), fundId, type, amount, date, note });
+                    // Update fund balance
+                    const fund = funds.find((f) => f.id === fundId);
+                    if (fund) {
+                        fund.saved = Math.max(
+                            0,
+                            fund.saved +
+                                (type === "Deposit" ? amount : -amount),
+                        );
+                    }
+                    toast(
+                        type === "Deposit"
+                            ? "💰 Deposit logged!"
+                            : "💸 Withdrawal logged!",
+                    );
+                }
+
+                closeModal("log-modal");
+                render();
+            }
+
+            function editLog(id) {
+                const log = logs.find((l) => l.id === id);
+                if (log) openLogModal(log);
+            }
+
+            function confirmDeleteLog(id) {
+                const log = logs.find((l) => l.id === id);
+                if (!log) return;
+                const fund = funds.find((f) => f.id === log.fundId);
+                document.getElementById("confirm-msg").innerHTML =
+                    `Delete this <strong>${log.type}</strong> entry of <strong>${fmt(log.amount)}</strong>${fund ? ` from <strong>${fund.name}</strong>` : ""}?`;
+                document.getElementById("confirm-delete-btn").onclick = () => {
+                    logs = logs.filter((l) => l.id !== id);
+                    closeModal("confirm-modal");
+                    render();
+                    toast("🗑️ Entry deleted.");
+                };
+                openModal("confirm-modal");
+            }
+
+            /* ═══════════════════════════════
+   MODAL HELPERS
+═══════════════════════════════ */
+            function openModal(id) {
+                document.getElementById(id).classList.add("open");
+            }
+            function closeModal(id) {
+                document.getElementById(id).classList.remove("open");
+            }
+
+            document.querySelectorAll(".modal-overlay").forEach((el) => {
+                el.addEventListener("click", (e) => {
+                    if (e.target === el) el.classList.remove("open");
+                });
+            });
+
+            /* ═══════════════════════════════
+   MOBILE NAV
+═══════════════════════════════ */
+            function toggleMobileNav() {
+                const sidebar = document.getElementById("sidebar");
+                const overlay = document.getElementById("nav-overlay");
+                const btn = document.getElementById("hamburger");
+                const open = sidebar.classList.toggle("mobile-open");
+                overlay.classList.toggle("open", open);
+                btn.classList.toggle("open", open);
+            }
+            function closeMobileNav() {
+                document
+                    .getElementById("sidebar")
+                    .classList.remove("mobile-open");
+                document.getElementById("nav-overlay").classList.remove("open");
+                document.getElementById("hamburger").classList.remove("open");
+            }
+
+            /* ═══════════════════════════════
+   TOAST
+═══════════════════════════════ */
+            function toast(msg) {
+                const container = document.getElementById("toast-container");
+                const el = document.createElement("div");
+                el.className = "toast";
+                el.textContent = msg;
+                container.appendChild(el);
+                setTimeout(() => el.remove(), 3200);
+            }
+
+            /* ═══════════════════════════════
+   INIT
+═══════════════════════════════ */
+            render();
+        </script>
+    </body>
+</html>
